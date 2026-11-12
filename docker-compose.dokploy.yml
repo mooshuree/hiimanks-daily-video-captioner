@@ -16,10 +16,9 @@ services:
       CONFIG_PATH: "/app/config.json"
       VIDEOS_DIR: "/app/videos"
       TMP_DIR: "/app/tmp"
+    # Persist rendered MP4s only. /app/tmp stays in the container (node can write).
     volumes:
-      - ../files/config.json:/app/config.json:ro
       - ../files/videos:/app/videos
-      - ../files/tmp:/app/tmp
     networks:
       - dokploy-network
 

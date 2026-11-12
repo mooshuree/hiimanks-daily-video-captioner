@@ -4,7 +4,7 @@ WORKDIR /app
 
 # FFmpeg in the same image as the Node app (available on PATH)
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg \
+  && apt-get install -y --no-install-recommends ffmpeg gosu \
   && rm -rf /var/lib/apt/lists/*
 
 # Optional: emoji fallback inside the container
@@ -17,9 +17,10 @@ COPY config.json ./
 COPY src ./src
 COPY fonts ./fonts
 
-RUN mkdir -p /app/output /app/videos /app/tmp \
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+  && mkdir -p /app/output /app/videos /app/tmp \
   && chown -R node:node /app
 
-USER node
-
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start"]
