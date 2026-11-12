@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3647:3647"
+    environment:
+      PORT: "3647"
+      PUBLIC_BASE_URL: "http://localhost:3647"
+      CONFIG_PATH: "/app/config.json"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./output:/app/output
+      - ./videos:/app/videos
+      - ./tmp:/app/tmp
+    # mem_limit: 512m
+    # cpus: "1.0"
+    networks:
+      - overlay-net
+
+networks:
+  overlay-net:
+    driver: bridge

@@ -1,0 +1,26 @@
+{
+  "fontsDir": "./fonts",
+  "outputDir": "./output",
+  "video": { "width": 720, "height": 1280 },
+  "defaults": {
+    "fontFamily": "Poppins",
+    "fontSize": 48,
+    "fontSizePercent": null,
+    "textColor": "#FFFFFF",
+    "backgroundColor": "#000000",
+    "borderRadius": 24,
+    "paddingX": 30,
+    "paddingY": 18,
+    "marginX": 60,
+    "marginY": 80,
+    "textAlign": "center",
+    "lineHeight": 1.2
+  },
+  "labels": [
+    {
+      "name": "wrap720",
+      "text": "This is a much longer sentence that should wrap onto multiple lines inside the margins",
+      "fontSizePercent": 4.5
+    }
+  ]
+}

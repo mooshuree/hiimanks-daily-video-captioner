@@ -1,0 +1,20 @@
+{
+  "fontsDir": "./fonts",
+  "outputDir": "./output",
+  "video": { "width": 1080, "height": 1920 },
+  "defaults": {
+    "fontFamily": "Poppins",
+    "fontSize": 48,
+    "fontSizePercent": null,
+    "textColor": "#FFFFFF",
+    "backgroundColor": "#000000",
+    "borderRadius": 24,
+    "paddingX": 30,
+    "paddingY": 18,
+    "marginX": 600,
+    "marginY": 80,
+    "textAlign": "center",
+    "lineHeight": 1.2
+  },
+  "labels": [{ "name": "tight", "text": "No room" }]
+}

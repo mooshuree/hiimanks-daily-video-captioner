@@ -1,0 +1,28 @@
+# Dokploy: create a Compose service, point Git at this repo, set compose path to this file.
+# Fonts are baked into the image (./fonts at build time). Commit .ttf/.otf files in the repo.
+# Add your domain in the Domains tab (service: app, port: 3647).
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "3647"
+    environment:
+      PORT: "3647"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      CONFIG_PATH: "/app/config.json"
+      VIDEOS_DIR: "/app/videos"
+      TMP_DIR: "/app/tmp"
+    volumes:
+      - ../files/config.json:/app/config.json:ro
+      - ../files/videos:/app/videos
+      - ../files/tmp:/app/tmp
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true

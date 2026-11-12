@@ -1,0 +1,38 @@
+{
+  "fontsDir": "./fonts",
+  "outputDir": "./output",
+  "video": { "width": 1080, "height": 1920 },
+  "defaults": {
+    "fontFamily": "ArchivoBlack",
+    "fontSize": 48,
+    "fontSizePercent": null,
+    "textColor": "#FFFFFF",
+    "backgroundColor": "#000000",
+    "borderRadius": 24,
+    "paddingX": 30,
+    "paddingY": 30,
+    "marginX": 60,
+    "marginY": 80,
+    "textAlign": "center",
+    "lineHeight": 1.2
+  },
+  "labels": [
+    { "name": "short", "text": "Hello World" },
+    {
+      "name": "long",
+      "text": "This is a much longer sentence that should wrap onto multiple lines inside the margins"
+    },
+    {
+      "name": "alert",
+      "text": "Warning",
+      "textColor": "#FF4444",
+      "backgroundColor": "rgba(0,0,0,0.8)",
+      "borderRadius": 12
+    },
+    {
+      "name": "relative",
+      "text": "Font size scales with the video width",
+      "fontSizePercent": 4.5
+    }
+  ]
+}

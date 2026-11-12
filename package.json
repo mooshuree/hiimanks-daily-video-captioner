@@ -1,0 +1,18 @@
+{
+  "name": "ffmpeg-text-overlay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "node src/index.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.1.0",
+    "express": "^4.21.2",
+    "zod": "^3.24.1"
+  }
+}
