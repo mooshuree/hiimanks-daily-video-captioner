@@ -16,8 +16,8 @@ services:
       CONFIG_PATH: "/app/config.json"
       VIDEOS_DIR: "/app/videos"
       TMP_DIR: "/app/tmp"
+    # config.json and fonts come from the image (COPY in Dockerfile). Edit in repo + redeploy.
     volumes:
-      - ../files/config.json:/app/config.json:ro
       - ../files/videos:/app/videos
       - ../files/tmp:/app/tmp
     networks:

@@ -11,12 +11,15 @@ Step 1 generates PNG labels with `@napi-rs/canvas` from `config.json`. Step 2 ru
 
 1. Push this repo to GitHub/GitLab and install [Dokploy](https://dokploy.com) on your VPS.
 2. **Project → Create Service → Compose** → connect the repo, branch `main`, compose file: **`docker-compose.dokploy.yml`**.
-3. Commit your `.ttf` / `.otf` files under `./fonts` (they are copied into the image at build). On Dokploy **Files** (optional), add `config.json` under `files/` if you use the compose volume override.
+3. Commit `config.json` and `.ttf` / `.otf` under `./fonts` — both are **`COPY`’d into the image** at build. Change defaults in Git, then **Deploy** again (no `config.json` bind mount on Dokploy).
 4. **Environment** in Dokploy: set `PUBLIC_BASE_URL` to your public URL, e.g. `https://overlay.example.com` (no trailing slash).
 5. **Domains** tab: service **`app`**, internal port **`3647`**, enable HTTPS (Let’s Encrypt).
 6. **Deploy** — use **Preview Compose** to confirm Traefik labels, then watch deployment logs.
 
 API: `https://overlay.example.com/api/overlay` · videos: `https://overlay.example.com/videos/<file>.mp4`
+
+**Dokploy mount error** (`not a directory` on `config.json`): Docker created a **folder** named `config.json` on the host because the file was missing. This compose file no longer mounts `config.json`. On the VPS you can remove that stray path if it exists:  
+`/etc/dokploy/compose/<your-service>/files/config.json` (delete only if it is an empty directory, not a real file).
 
 ## Quick start (Docker API)
 
