@@ -44,6 +44,21 @@ const deleteVideoRequestSchema = z
   .transform((data) => data.name ?? data.fileName);
 
 const app = express();
+app.set('trust proxy', true);
+
+app.use((req, res, next) => {
+  const target = req.originalUrl;
+  const started = Date.now();
+  console.log(`[http] --> ${req.method} ${target} ip=${req.ip}`);
+
+  res.on('finish', () => {
+    console.log(
+      `[http] <-- ${req.method} ${target} ${res.statusCode} ${Date.now() - started}ms`,
+    );
+  });
+  next();
+});
+
 app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (_req, res) => {

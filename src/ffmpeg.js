@@ -4,6 +4,25 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 /**
+ * @param {unknown} err
+ * @param {string} label
+ */
+function execFailureMessage(err, label) {
+  if (!err || typeof err !== 'object') {
+    return `${label}: unknown error`;
+  }
+  const e = /** @type {{ message?: string, stderr?: string }} */ (err);
+  const stderr = typeof e.stderr === 'string' ? e.stderr.trim() : '';
+  if (stderr) {
+    return `${label}: ${stderr}`;
+  }
+  if (e.message) {
+    return `${label}: ${e.message}`;
+  }
+  return `${label}: command failed`;
+}
+
+/**
  * @returns {Promise<boolean>}
  */
 export async function ffmpegAvailable() {
@@ -19,21 +38,26 @@ export async function ffmpegAvailable() {
  * @param {string} inputPath
  */
 export async function probeVideo(inputPath) {
-  const { stdout } = await execFileAsync(
-    'ffprobe',
-    [
-      '-v',
-      'error',
-      '-select_streams',
-      'v:0',
-      '-show_entries',
-      'stream=width,height,duration',
-      '-of',
-      'json',
-      inputPath,
-    ],
-    { timeout: 60_000, maxBuffer: 1024 * 1024 },
-  );
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(
+      'ffprobe',
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=width,height,duration',
+        '-of',
+        'json',
+        inputPath,
+      ],
+      { timeout: 60_000, maxBuffer: 1024 * 1024 },
+    ));
+  } catch (err) {
+    throw new Error(execFailureMessage(err, 'ffprobe failed'));
+  }
 
   const data = JSON.parse(stdout);
   const stream = data.streams?.[0];
@@ -62,37 +86,48 @@ export async function overlayPngOnVideo(opts) {
   const xPos = Math.max(0, Math.round(x));
   const yPos = Math.max(0, Math.round(y));
 
-  const filter = `[0:v][1:v]overlay=${xPos}:${yPos}`;
+  // libx264 + yuv420p needs even width/height; scale before overlay when source is odd.
+  const filter = `[0:v]scale=trunc(iw/2)*2:trunc(ih/2)*2[base];[base][1:v]overlay=${xPos}:${yPos}[vout]`;
 
-  await execFileAsync(
-    'ffmpeg',
-    [
-      '-hide_banner',
-      '-loglevel',
-      'error',
-      '-y',
-      '-i',
-      inputPath,
-      '-i',
-      overlayPngPath,
-      '-filter_complex',
-      filter,
-      '-map',
-      '0:a?',
-      '-c:v',
-      'libx264',
-      '-preset',
-      'fast',
-      '-crf',
-      '23',
-      '-pix_fmt',
-      'yuv420p',
-      '-c:a',
-      'copy',
-      outputPath,
-    ],
-    { timeout: 600_000, maxBuffer: 10 * 1024 * 1024 },
-  );
+  try {
+    await execFileAsync(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-y',
+        '-i',
+        inputPath,
+        '-i',
+        overlayPngPath,
+        '-filter_complex',
+        filter,
+        '-map',
+        '[vout]',
+        '-map',
+        '0:a?',
+        '-c:v',
+        'libx264',
+        '-preset',
+        'fast',
+        '-crf',
+        '23',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
+        '-movflags',
+        '+faststart',
+        outputPath,
+      ],
+      { timeout: 600_000, maxBuffer: 10 * 1024 * 1024 },
+    );
+  } catch (err) {
+    throw new Error(execFailureMessage(err, 'ffmpeg overlay failed'));
+  }
 }
 
 /**
