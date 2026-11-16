@@ -1,5 +1,5 @@
 import express from 'express';
-import { mkdir, unlink } from 'node:fs/promises';
+import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { z } from 'zod';
 import { labelStyleSchema, loadConfig } from './config.js';
@@ -26,12 +26,26 @@ const overlayRequestSchema = z.object({
   style: labelStyleSchema.partial().optional(),
 });
 
+const VIDEO_FILE_RE = /^[A-Za-z0-9_-]+\.mp4$/;
+
 const videoFileNameSchema = z
   .string()
   .regex(
-    /^[A-Za-z0-9_-]+\.mp4$/,
+    VIDEO_FILE_RE,
     'must be a plain .mp4 file name (no folders or path segments)',
   );
+
+/**
+ * @param {string} fileName
+ */
+function videoFilePath(fileName) {
+  const filePath = join(VIDEOS_DIR, fileName);
+  const resolvedVideoDir = resolve(VIDEOS_DIR);
+  if (!resolve(filePath).startsWith(resolvedVideoDir)) {
+    return null;
+  }
+  return filePath;
+}
 
 const deleteVideoRequestSchema = z
   .object({
@@ -114,6 +128,43 @@ app.post('/api/overlay', async (req, res) => {
   }
 });
 
+app.get('/api/videos', async (_req, res) => {
+  try {
+    await mkdir(VIDEOS_DIR, { recursive: true });
+    const entries = await readdir(VIDEOS_DIR, { withFileTypes: true });
+    const names = entries
+      .filter((e) => e.isFile() && VIDEO_FILE_RE.test(e.name))
+      .map((e) => e.name);
+
+    const videos = await Promise.all(
+      names.map(async (name) => {
+        const filePath = videoFilePath(name);
+        if (!filePath) {
+          return null;
+        }
+        const info = await stat(filePath);
+        return {
+          name,
+          fileName: name,
+          url: `${PUBLIC_BASE_URL}/videos/${name}`,
+          bytes: info.size,
+          modifiedAt: info.mtime.toISOString(),
+        };
+      }),
+    );
+
+    const list = videos
+      .filter((v) => v != null)
+      .sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
+
+    return res.json({ count: list.length, videos: list });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'List failed';
+    console.error('GET /api/videos', message);
+    return res.status(500).json({ error: message });
+  }
+});
+
 app.delete('/api/video', async (req, res) => {
   let fileName;
   try {
@@ -126,9 +177,8 @@ app.delete('/api/video', async (req, res) => {
     throw e;
   }
 
-  const filePath = join(VIDEOS_DIR, fileName);
-  const resolvedVideoDir = resolve(VIDEOS_DIR);
-  if (!resolve(filePath).startsWith(resolvedVideoDir)) {
+  const filePath = videoFilePath(fileName);
+  if (!filePath) {
     return res.status(400).json({ error: 'Invalid file name' });
   }
 

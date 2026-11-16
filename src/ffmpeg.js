@@ -86,21 +86,56 @@ export async function probeVideo(inputPath) {
 }
 
 /**
+ * Fit inside 1080p bounds (1920×1080 landscape, 1080×1920 portrait). Never upscales.
+ * Dimensions are even for libx264 + yuv420p.
+ * @param {number} width
+ * @param {number} height
+ */
+export function computeMax1080pDimensions(width, height) {
+  const landscape = width >= height;
+  const maxW = landscape ? 1920 : 1080;
+  const maxH = landscape ? 1080 : 1920;
+  const scale = Math.min(1, maxW / width, maxH / height);
+  let w = Math.round(width * scale);
+  let h = Math.round(height * scale);
+  w = Math.trunc(w / 2) * 2;
+  h = Math.trunc(h / 2) * 2;
+  if (w < 2) {
+    w = 2;
+  }
+  if (h < 2) {
+    h = 2;
+  }
+  return { width: w, height: h };
+}
+
+/**
  * @param {{
  *   inputPath: string,
  *   overlayPngPath: string,
  *   outputPath: string,
  *   x: number,
  *   y: number,
+ *   outputWidth: number,
+ *   outputHeight: number,
  * }} opts
  */
 export async function overlayPngOnVideo(opts) {
-  const { inputPath, overlayPngPath, outputPath, x, y } = opts;
+  const {
+    inputPath,
+    overlayPngPath,
+    outputPath,
+    x,
+    y,
+    outputWidth,
+    outputHeight,
+  } = opts;
   const xPos = Math.max(0, Math.round(x));
   const yPos = Math.max(0, Math.round(y));
+  const outW = Math.trunc(outputWidth / 2) * 2;
+  const outH = Math.trunc(outputHeight / 2) * 2;
 
-  // libx264 + yuv420p needs even width/height; scale before overlay when source is odd.
-  const filter = `[0:v]scale=trunc(iw/2)*2:trunc(ih/2)*2[base];[base][1:v]overlay=${xPos}:${yPos}[vout]`;
+  const filter = `[0:v]scale=${outW}:${outH}[base];[base][1:v]overlay=${xPos}:${yPos}[vout]`;
 
   try {
     await execFileAsync(

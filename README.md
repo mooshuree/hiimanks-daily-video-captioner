@@ -128,10 +128,11 @@ The container runs as the `node` user. Files in `./output` may be owned by UID 1
 | --- | --- | --- |
 | `GET` | `/health` | Liveness check |
 | `GET` | `/videos/:file` | Static download of rendered videos |
+| `GET` | `/api/videos` | List rendered MP4s in `VIDEOS_DIR` (`name`, `url`, `bytes`, `modifiedAt`) |
 | `POST` | `/api/overlay` | Body: `{ videoUrl, text, style? }` → `{ url, fileName, video, label }` |
 | `DELETE` | `/api/video` | Body: `{ name }` or `{ fileName }` — deletes file from `videos/` |
 
-Label width comes from the **probed** source video width; wrapping uses `marginX` / `paddingX` from config (or `style` overrides).
+Output video is capped at **1080p** (1920×1080 landscape, 1080×1920 portrait; never upscaled). Labels are sized to that output frame; wrapping uses `marginX` / `paddingX` from config (or `style` overrides).
 
 ## Project layout
 

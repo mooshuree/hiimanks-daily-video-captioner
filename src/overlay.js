@@ -3,6 +3,7 @@ import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { downloadVideo } from './download.js';
 import {
+  computeMax1080pDimensions,
   computeOverlayPosition,
   overlayPngOnVideo,
   probeVideo,
@@ -35,14 +36,24 @@ export async function createOverlayVideo(params) {
     console.log(`[overlay] ${jobId} downloading…`);
     await downloadVideo(videoUrl, inputPath);
     const { size: bytesOnDisk } = await stat(inputPath);
-    const { width: videoWidth, height: videoHeight, duration } =
-      await probeVideo(inputPath);
+    const {
+      width: sourceWidth,
+      height: sourceHeight,
+      duration,
+    } = await probeVideo(inputPath);
+    const { width: videoWidth, height: videoHeight } = computeMax1080pDimensions(
+      sourceWidth,
+      sourceHeight,
+    );
     const durationLabel =
       duration != null && Number.isFinite(duration)
         ? `${Math.round(duration)}s`
         : 'unknown duration';
+    const scaledDown =
+      sourceWidth !== videoWidth || sourceHeight !== videoHeight;
     console.log(
-      `[overlay] ${jobId} download ok — ${bytesOnDisk} bytes, ${videoWidth}×${videoHeight}, ${durationLabel}`,
+      `[overlay] ${jobId} download ok — ${bytesOnDisk} bytes, ${sourceWidth}×${sourceHeight}, ${durationLabel}` +
+        (scaledDown ? ` → output ${videoWidth}×${videoHeight} (1080p cap)` : ''),
     );
 
     assertFontRegistered(String(style.fontFamily));
@@ -79,6 +90,8 @@ export async function createOverlayVideo(params) {
       outputPath,
       x,
       y,
+      outputWidth: videoWidth,
+      outputHeight: videoHeight,
     });
     console.log(
       `[overlay] ${jobId} ffmpeg done in ${Math.round((Date.now() - encodeStarted) / 1000)}s → ${outputName}`,
