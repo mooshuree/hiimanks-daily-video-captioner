@@ -1,8 +1,7 @@
 import { createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
-
-const DEFAULT_MAX_BYTES = 500 * 1024 * 1024;
+import { DOWNLOAD_TIMEOUT_MS, MAX_DOWNLOAD_BYTES } from './runtime-env.js';
 
 /**
  * @param {string} url
@@ -10,8 +9,8 @@ const DEFAULT_MAX_BYTES = 500 * 1024 * 1024;
  * @param {{ maxBytes?: number, timeoutMs?: number }} [opts]
  */
 export async function downloadVideo(url, destPath, opts = {}) {
-  const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
-  const timeoutMs = opts.timeoutMs ?? 120_000;
+  const maxBytes = opts.maxBytes ?? MAX_DOWNLOAD_BYTES;
+  const timeoutMs = opts.timeoutMs ?? DOWNLOAD_TIMEOUT_MS;
 
   let parsed;
   try {

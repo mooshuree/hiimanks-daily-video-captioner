@@ -68,6 +68,13 @@ docker compose run --rm -v ./config.extra.json:/app/config.extra.json:ro app npm
 | `CONFIG_PATH` | `config.json` | Label defaults and font paths |
 | `VIDEOS_DIR` | `./videos` | Rendered MP4 output |
 | `TMP_DIR` | `./tmp` | Download / intermediate files |
+| `MAX_DOWNLOAD_BYTES` | `524288000` (500 MB) | Reject larger downloads |
+| `DOWNLOAD_TIMEOUT_MS` | `1800000` (30 min) | Max time to fetch `videoUrl` |
+| `FFMPEG_TIMEOUT_MS` | `3600000` (60 min) | Max time for one encode job |
+| `FFMPEG_PRESET` | `veryfast` | x264 speed preset (`ultrafast` … `slow`) |
+| `FFMPEG_CRF` | `23` | Output quality (lower = bigger/slower) |
+
+Long jobs (~200 MB+, many minutes of footage) **re-encode the entire video** on the server. A small VPS can need **more than 10 minutes**; raise `FFMPEG_TIMEOUT_MS` in Dokploy if logs show a timeout. If the **HTTP client** gives up first, increase your reverse proxy read timeout as well.
 
 ## Quick start (local)
 

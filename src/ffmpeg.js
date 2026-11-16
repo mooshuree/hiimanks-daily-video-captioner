@@ -1,5 +1,10 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import {
+  FFMPEG_CRF,
+  FFMPEG_PRESET,
+  FFMPEG_TIMEOUT_MS,
+} from './runtime-env.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -11,7 +16,15 @@ function execFailureMessage(err, label) {
   if (!err || typeof err !== 'object') {
     return `${label}: unknown error`;
   }
-  const e = /** @type {{ message?: string, stderr?: string }} */ (err);
+  const e = /** @type {{ message?: string, stderr?: string, killed?: boolean, signal?: string }} */ (
+    err
+  );
+  if (e.killed) {
+    const hint =
+      'Timed out — large or long videos need a faster VPS and/or higher FFMPEG_TIMEOUT_MS (and DOWNLOAD_TIMEOUT_MS for slow downloads).';
+    const stderr = typeof e.stderr === 'string' ? e.stderr.trim() : '';
+    return stderr ? `${label}: ${stderr} (${hint})` : `${label}: ${hint}`;
+  }
   const stderr = typeof e.stderr === 'string' ? e.stderr.trim() : '';
   if (stderr) {
     return `${label}: ${stderr}`;
@@ -110,9 +123,9 @@ export async function overlayPngOnVideo(opts) {
         '-c:v',
         'libx264',
         '-preset',
-        'fast',
+        FFMPEG_PRESET,
         '-crf',
-        '23',
+        String(FFMPEG_CRF),
         '-pix_fmt',
         'yuv420p',
         '-c:a',
@@ -123,7 +136,7 @@ export async function overlayPngOnVideo(opts) {
         '+faststart',
         outputPath,
       ],
-      { timeout: 600_000, maxBuffer: 10 * 1024 * 1024 },
+      { timeout: FFMPEG_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 },
     );
   } catch (err) {
     throw new Error(execFailureMessage(err, 'ffmpeg overlay failed'));

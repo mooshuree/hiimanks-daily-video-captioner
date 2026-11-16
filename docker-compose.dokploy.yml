@@ -16,6 +16,10 @@ services:
       CONFIG_PATH: "/app/config.json"
       VIDEOS_DIR: "/app/videos"
       TMP_DIR: "/app/tmp"
+      # Large clips: full re-encode — allow long download/encode (optional overrides)
+      # DOWNLOAD_TIMEOUT_MS: "1800000"
+      # FFMPEG_TIMEOUT_MS: "3600000"
+      # FFMPEG_PRESET: "veryfast"
     # config.json and fonts come from the image (COPY in Dockerfile). Edit in repo + redeploy.
     # Persist rendered MP4s only. /app/tmp stays in the container (node can write).
     volumes:

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { downloadVideo } from './download.js';
 import {
@@ -32,9 +32,18 @@ export async function createOverlayVideo(params) {
   const outputPath = join(videosDir, outputName);
 
   try {
+    console.log(`[overlay] ${jobId} downloading…`);
     await downloadVideo(videoUrl, inputPath);
-    const { width: videoWidth, height: videoHeight } =
+    const { size: bytesOnDisk } = await stat(inputPath);
+    const { width: videoWidth, height: videoHeight, duration } =
       await probeVideo(inputPath);
+    const durationLabel =
+      duration != null && Number.isFinite(duration)
+        ? `${Math.round(duration)}s`
+        : 'unknown duration';
+    console.log(
+      `[overlay] ${jobId} download ok — ${bytesOnDisk} bytes, ${videoWidth}×${videoHeight}, ${durationLabel}`,
+    );
 
     assertFontRegistered(String(style.fontFamily));
 
@@ -62,6 +71,8 @@ export async function createOverlayVideo(params) {
       );
     }
 
+    const encodeStarted = Date.now();
+    console.log(`[overlay] ${jobId} ffmpeg encode started (full re-encode, may take a while)…`);
     await overlayPngOnVideo({
       inputPath,
       overlayPngPath: overlayPath,
@@ -69,6 +80,9 @@ export async function createOverlayVideo(params) {
       x,
       y,
     });
+    console.log(
+      `[overlay] ${jobId} ffmpeg done in ${Math.round((Date.now() - encodeStarted) / 1000)}s → ${outputName}`,
+    );
 
     return {
       fileName: outputName,
